@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>羊羊專車 VIP 下單系統</title>
+    <style>
+        :root { 
+            --bg: #fffdf2; 
+            --active-time: #ffd600; 
+            --active-price: #d1c4e9; 
+            --accent: #ff7043; 
+            --main-green: #e8f5e9; 
+        }
+        body { 
+            font-family: "Microsoft JhengHei", sans-serif; 
+            background-color: var(--bg); 
+            margin: 0; 
+            padding: 20px; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+        }
+        .card { 
+            width: 100%; 
+            max-width: 400px; 
+            background: white; 
+            border-radius: 40px; 
+            padding: 30px; 
+            box-shadow: 0 15px 40px rgba(0,0,0,0.1); 
+            text-align: center; 
+            box-sizing: border-box; 
+        }
+        .badge { 
+            background: #ffd54f; 
+            color: #5d4037; 
+            padding: 5px 15px; 
+            border-radius: 50px; 
+            font-weight: bold; 
+            font-size: 0.85rem; 
+            display: inline-block; 
+            margin-bottom: 10px; 
+        }
+        h1 { color: #2e7d32; margin: 10px 0; font-size: 1.8rem; }
+        .slogan { color: #666; font-size: 0.9rem; margin-bottom: 20px; }
+        
+        .section-title { text-align: left; font-weight: bold; color: #388e3c; margin: 20px 0 10px 10px; }
+        
+        .item-table { width: 100%; border-collapse: separate; border-spacing: 0 10px; }
+        .item-table td { 
+            background-color: var(--main-green); 
+            padding: 18px; 
+            border-radius: 20px; 
+            font-size: 1.25rem; 
+            font-weight: bold; 
+            cursor: pointer; 
+            color: #2e7d32; 
+            border: 3px solid transparent; 
+            transition: 0.3s; 
+        }
+        
+        /* 選中狀態顏色 */
+        .time-row.selected td { background-color: var(--active-time); color: #000; border-color: #fbc02d; }
+        .price-row.selected td { background-color: var(--active-price); color: #311b92; border-color: #7e57c2; }
+        
+        .summary { 
+            margin-top: 25px; 
+            padding: 20px; 
+            background: #fafafa; 
+            border-radius: 30px; 
+            border: 2px dashed #ddd; 
+        }
+        .total-text { font-size: 2.5rem; font-weight: 900; color: #d84315; }
+        
+        .submit-btn { 
+            width: 100%; 
+            margin-top: 25px; 
+            padding: 22px; 
+            border-radius: 25px; 
+            border: none; 
+            background-color: #ddd; 
+            color: white; 
+            font-size: 1.5rem; 
+            font-weight: 900; 
+            cursor: not-allowed; 
+            transition: 0.3s;
+        }
+        .submit-btn.ready { 
+            background-color: var(--accent); 
+            cursor: pointer; 
+            box-shadow: 0 10px 25px rgba(255,112,67,0.3); 
+        }
+        .submit-btn.ready:active { transform: scale(0.95); }
+
+        /* 完成動畫層 */
+        .overlay { 
+            display: none; 
+            position: fixed; 
+            top: 0; left: 0; width: 100%; height: 100%; 
+            background: white; 
+            z-index: 1000; 
+            flex-direction: column; 
+            justify-content: center; 
+            align-items: center; 
+            text-align: center; 
+        }
+        .sheep { font-size: 100px; animation: jump 0.4s infinite alternate; }
+        @keyframes jump { from { transform: translateY(0); } to { transform: translateY(-30px); } }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <div class="badge">今日限定 VIP</div>
+        <h1>🐑 羊羊專車</h1>
+        <div class="slogan">羊味十足・醒腦提神<br>保證不暈車的專屬服務</div>
+
+        <div class="section-title">🕒 第一步：選擇預約時間</div>
+        <table class="item-table">
+            <tr class="time-row" onclick="selectTime(this,'19:00')"><td>19:00</td></tr>
+            <tr class="time-row" onclick="selectTime(this,'20:00')"><td>20:00</td></tr>
+            <tr class="time-row" onclick="selectTime(this,'20:30')"><td>20:30</td></tr>
+            <tr class="time-row" onclick="selectTime(this,'21:00')"><td>21:00</td></tr>
+            <tr class="time-row" onclick="selectTime(this,'21:30')"><td>21:30</td></tr>
+        </table>
+
+        <div class="section-title">💰 第二步：選擇服務項目</div>
+        <table class="item-table">
+            <tr class="price-row" id="p1" onclick="selectPrice('p1', 90, '單趟')"><td>單趟 90 元</td></tr>
+            <tr class="price-row" id="p2" onclick="selectPrice('p2', 10, '安全帽')"><td>安全帽 10 元</td></tr>
+        </table>
+
+        <div class="summary">
+            <div id="display-time" style="font-weight: bold; color: #666;">尚未選擇時間</div>
+            <div class="total-text" id="display-price">$0</div>
+        </div>
+
+        <button class="submit-btn" id="submit-btn" onclick="handleSubmit()">確定下單</button>
+    </div>
+
+    <!-- 完成畫面 -->
+    <div id="finish-overlay" class="overlay">
+        <div class="sheep">🐑</div>
+        <h2 style="color: #2e7d32;">下單完成！</h2>
+        <p>正在通知羊羊並開啟 Line...</p>
+    </div>
+
+    <script>
+        let selectedTime = "";
+        let selectedItems = new Map();
+        let totalPrice = 0;
+
+        function selectTime(element, time) {
+            document.querySelectorAll('.time-row').forEach(row => row.classList.remove('selected'));
+            element.classList.add('selected');
+            selectedTime = time;
+            document.getElementById('display-time').innerText = "預約時段：" + time;
+            validate();
+        }
+
+        function selectPrice(id, price, name) {
+            const element = document.getElementById(id);
+            if (selectedItems.has(name)) {
+                selectedItems.delete(name);
+                element.classList.remove('selected');
+            } else {
+                selectedItems.set(name, price);
+                element.classList.add('selected');
+            }
+            
+            totalPrice = 0;
+            selectedItems.forEach(value => totalPrice += value);
+            document.getElementById('display-price').innerText = "$" + totalPrice;
+            validate();
+        }
+
+        function validate() {
+            const btn = document.getElementById('submit-btn');
+            if (selectedTime !== "" && totalPrice > 0) {
+                btn.classList.add('ready');
+            } else {
+                btn.classList.remove('ready');
+            }
+        }
+
+        function handleSubmit() {
+            if (selectedTime === "" || totalPrice === 0) return;
+
+            // 顯示動畫
+            document.getElementById('finish-overlay').style.display = 'flex';
+
+            // 1. 傳送到 Google 表單 (背景傳送)
+            const formUrl = "https://docs.google.com/forms/d/e/1FAIpQLSdL5_1DV1sG9GcewsuTF9HJgeXhmDIm5KWzvG4-VejOOgz5Rw/formResponse";
+            const formData = new URLSearchParams();
+            formData.append("entry.2087055550", selectedTime);
+            formData.append("entry.1589631620", Array.from(selectedItems.keys()).join('、') + " (總額 $" + totalPrice + ")");
+
+            fetch(formUrl, {
+                method: 'POST',
+                mode: 'no-cors',
+                body: formData
+            });
+
+            // 2. 延遲一下後跳轉到 Line 訊息
+            setTimeout(() => {
+                const lineMsg = `【🐑 羊羊專車訂單】\n預約時間：${selectedTime}\n服務項目：${Array.from(selectedItems.keys()).join('、')}\n合計金額：$${totalPrice}`;
+                window.location.href = `https://line.me/R/msg/text/?${encodeURIComponent(lineMsg)}`;
+            }, 2000);
+        }
+    </script>
+</body>
+</html>
